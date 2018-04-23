@@ -39,11 +39,15 @@ Private Sub Main()
     ws.Activate
     Call getRequirements
     Call updateListBox
+    downloadFCQData.Enabled = True
+    If Evaluate("ISREF('" & "Data" & "'!A1)") Then
+        findClass.Enabled = True
+    End If
 End Sub
 
 Private Sub updateListBox()
     Dim rngRequirements As Range, cell As Range
-    Set rngRequirements = Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("A1:H1")
+    Set rngRequirements = Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("A1:J1")
     For Each cell In rngRequirements
         ListBox1.AddItem (cell.Value)
     Next cell
@@ -52,7 +56,7 @@ End Sub
 
 Private Sub getRequirements()
 
-    Dim strUrl As String, objIe As InternetExplorer, objHtml As HTMLDocument, strHtml As String, objDivs As Variant, objAnchors As IHTMLElementCollection, intCounter As Integer, links As Variant, i As Integer, activeSheetCounter As Integer
+    Dim strUrl As String, activeSheetCounterUpper As Integer, topCounter As Integer, strParts As Variant, isMulti As Boolean, htwo As Variant, objHTwo As Object, objIe As InternetExplorer, objHtml As HTMLDocument, strHtml As String, objDivs As Variant, objAnchors As IHTMLElementCollection, intCounter As Integer, links As Variant, i As Integer, activeSheetCounter As Integer
     links = Array("https://www.colorado.edu/artsandsciences/human-diversity", "https://www.colorado.edu/artsandsciences/current-students/core-curriculum/ideals-and-values", "https://www.colorado.edu/artsandsciences/historical-context", "https://www.colorado.edu/artsandsciences/literature-and-arts", "https://www.colorado.edu/artsandsciences/united-states-context", "https://www.colorado.edu/artsandsciences/contemporary-societies", "https://www.colorado.edu/artsandsciences/natural-science", "https://www.colorado.edu/artsandsciences/written-communication")
     'set target to scrape
     Debug.Print "here"
@@ -60,6 +64,7 @@ Private Sub getRequirements()
     For i = 0 To (UBound(links) - LBound(links))
         'Debug.Print "here2"
         activeSheetCounter = 0
+        activeSheetCounterUpper = 0
         strUrl = links(i)
         'get html from page
         Set objIe = New InternetExplorer
@@ -73,9 +78,24 @@ Private Sub getRequirements()
         Set objHtml = New HTMLDocument
         Set objHtml = objIe.document
         Set objDivs = objIe.document.getElementsByTagName("LI")
-        
+        Set objHTwo = objIe.document.getElementsByTagName("H2")
+        isMulti = False
+        For Each htwo In objHTwo
+            If htwo.innerText = "Upper-Division Courses" Then
+                isMulti = True
+            End If
+        Next htwo
+
         Debug.Print objDivs.Length
-        Application.ActiveSheet.Cells(1, 1 + i).Value = objIe.document.getElementById("page-title").innerText
+        
+        If isMulti Then
+            Application.ActiveSheet.Cells(1, 1 + topCounter).Value = objIe.document.getElementById("page-title").innerText & " L/D"
+            Application.ActiveSheet.Cells(1, 2 + topCounter).Value = objIe.document.getElementById("page-title").innerText & " U/D"
+            topCounter = topCounter + 2
+        Else
+            Application.ActiveSheet.Cells(1, 1 + topCounter).Value = objIe.document.getElementById("page-title").innerText
+            topCounter = topCounter + 1
+        End If
         Dim regEx As New RegExp, strPattern As String
         strPattern = "<strong>"
     
@@ -88,8 +108,20 @@ Private Sub getRequirements()
         If objDivs.Length > 0 Then
             For intCounter = 0 To objDivs.Length - 1
                 If regEx.test(objDivs(intCounter).innerHTML) Then
-                    Application.ActiveSheet.Cells(2 + activeSheetCounter, 1 + i).Value = objDivs(intCounter).innerText
-                    activeSheetCounter = activeSheetCounter + 1
+                    If isMulti Then
+                        strParts = Split(objDivs(intCounter).innerText, " ")
+                        strParts = Split(strParts(1), "-")
+                        If CInt(strParts(0)) >= 3000 Then
+                            Application.ActiveSheet.Cells(2 + activeSheetCounter, topCounter).Value = objDivs(intCounter).innerText
+                            activeSheetCounter = activeSheetCounter + 1
+                        Else
+                            Application.ActiveSheet.Cells(2 + activeSheetCounterUpper, topCounter - 1).Value = objDivs(intCounter).innerText
+                            activeSheetCounterUpper = activeSheetCounterUpper + 1
+                        End If
+                    Else
+                        Application.ActiveSheet.Cells(2 + activeSheetCounter, topCounter).Value = objDivs(intCounter).innerText
+                        activeSheetCounter = activeSheetCounter + 1
+                    End If
                 End If
             Next intCounter
          End If
@@ -99,8 +131,8 @@ Private Sub getRequirements()
         objIe.Quit
         Set objIe = Nothing
     Next i
-    ActiveSheet.Range("A1:H1").Columns.AutoFit
-    ActiveSheet.Range("A1:H1").Interior.Color = RGB(207, 216, 220)
+    ActiveSheet.Range("A1:J1").Columns.AutoFit
+    ActiveSheet.Range("A1:J1").Interior.Color = RGB(207, 216, 220)
 End Sub
 
 Public Sub mainGrades()
@@ -110,6 +142,9 @@ Public Sub mainGrades()
     Debug.Print "before"
     Call DownloadFile(targetFile)
     Call writeData(targetFile)
+    If Evaluate("ISREF('" & "Requirements" & "'!A1)") Then
+        findClass.Enabled = True
+    End If
 End Sub
 
 Public Sub writeData(Target As String)
@@ -123,7 +158,7 @@ Public Sub writeData(Target As String)
     Debug.Print destWkb.Worksheets.Count
     '' One of the many mysteries of vba
     wrksheet.Copy After:=destWkb.Worksheets(1)
-    gradesWkb.Close
+    gradesWkb.Close savechanges:=False
     Set gradesWkb = Nothing
 End Sub
 
@@ -174,7 +209,7 @@ Private Sub findClassMain()
     Dim reqWks As Worksheet, dataWks As Worksheet, cell As Variant, subjectParts As Variant, numbers As Variant, tmpClassInfoStr As String, classInfoStr As String, numberStr As String, numberParts As Variant, strPattern As String, regEx As New RegExp, columnNum As Integer, i As Integer, valueStr As String, valueParts As Variant, subjects As Variant, subjectStr As String, tmpNumber As String, tmpSubject As String
     Set reqWks = Application.Workbooks("Project.xlsm").Worksheets("Requirements")
     Set dataWks = Application.Workbooks("Project.xlsm").Worksheets("Data")
-    columnNum = Application.WorksheetFunction.Match(ListBox1.Value, reqWks.Range("A1:H1"), 0)
+    columnNum = Application.WorksheetFunction.Match(ListBox1.Value, reqWks.Range("A1:J1"), 0)
     For i = 0 To (Application.WorksheetFunction.CountA(reqWks.Columns(columnNum)) - 2)
         valueStr = reqWks.Cells(2 + i, columnNum).Value
         valueParts = Split(valueStr, " ")
@@ -225,7 +260,6 @@ Private Sub findClassMain()
     'Have to loop through the cells again, as there may be some classes that were supposed to be filtered but weren't'
     For Each cell In dataWks.Range("A5:A" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible)
         tmpClassInfoStr = cell.Offset(0, 4).Value & cell.Offset(0, 5).Value
-        Debug.Print tmpClassInfoStr
         If Not classInfoStr Like ("*" & tmpClassInfoStr & "*") Then
             cell.EntireRow.Hidden = True
         End If
@@ -240,4 +274,16 @@ End Sub
 
 Private Sub UserForm_Click()
 
+End Sub
+
+Private Sub UserForm_Initialize()
+    If Evaluate("ISREF('" & "Requirements" & "'!A1)") Then
+        UserForm1.downloadFCQData.Enabled = True
+        If Evaluate("ISREF('" & "Data" & "'!A1)") Then
+            UserForm1.findClass.Enabled = True
+        End If
+    End If
+    
+    
+    
 End Sub

@@ -16,8 +16,8 @@ Private Sub findClass_Click()
     
     If Evaluate("ISREF('" & "Requirements" & "'!A1)") Then
         Set reqWks = Application.Workbooks("Project.xlsm").Worksheets("Requirements")
-        If IsEmpty(Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("H1")) = False Then
-            For i = 1 To Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("A1:H1").Columns.Count
+        If IsEmpty(Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("J1")) = False Then
+            For i = 1 To Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("A1:J1").Columns.Count
                 UserForm1.ListBox1.AddItem (Application.Workbooks("Project.xlsm").Worksheets("Requirements").Cells(1, i).Value)
             Next i
             UserForm1.ListBox1.Selected(0) = True
