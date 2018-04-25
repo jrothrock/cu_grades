@@ -10,14 +10,15 @@ Attribute VB_Exposed = True
 Option Explicit
 
 Private Sub findClass_Click()
+    'is really a pre-initiation of the userform. Sets all the values on this listbox if there is a requirements and data worksheet
     Dim cell As Range, reqWks As Worksheet, i As Integer
     
-    'So apparently an and in the if statement will evaluate both sides, even if the first one fails. Interesting. If has to be broken up into two
+    'So apparently an if statement will evaluate both sides, even if the first one fails. Interesting. If has to be broken up into two
     
     If Evaluate("ISREF('" & "Requirements" & "'!A1)") Then
         Set reqWks = Application.Workbooks("Project.xlsm").Worksheets("Requirements")
-        If IsEmpty(Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("J1")) = False Then
-            For i = 1 To Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("A1:J1").Columns.Count
+        If IsEmpty(Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("L1")) = False Then
+            For i = 1 To Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("A1:L1").Columns.Count
                 UserForm1.ListBox1.AddItem (Application.Workbooks("Project.xlsm").Worksheets("Requirements").Cells(1, i).Value)
             Next i
             UserForm1.ListBox1.Selected(0) = True
