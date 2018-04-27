@@ -2,11 +2,15 @@
 
 ** Note, this will only work on Windows due to needing ActiveX **
 
-## How It Works
+## About
+This was used for my final project for MGMT 3210 - Business App Programming. 
 
-Input what classes you need to take - ex. A human diversity, an ideals and values - and it will select from the list of classes, for that subject, the one that has the highest GPA average. In time, it'd be sweet if this was able to do a full schedule, as well as compare you to the students around you.
+The idea is that you select the core requirements class that you need to take - ie. a human diversity, or an ideas and values, etc - and the FCQ data will be filtered and sorted to show what classes are available, and out of those classes the ones with the highest GPA. 
 
-This uses public information provided by CU - the FCQ excel downloads, as well as the student demographic data.
+## Download
+This link contains the excel sheet with the 2017 FCQ data and requirements already included. Everything will need to be enabled when the file is opened:
+
+https://www.dropbox.com/s/gc9kst6n8bepe2u/CU_Class_Helper.xlsm?dl=0
 
 ## License
     MIT

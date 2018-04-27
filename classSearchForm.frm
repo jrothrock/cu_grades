@@ -1,14 +1,14 @@
 VERSION 5.00
-Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} UserForm1 
+Begin {C62A69F0-16DC-11CE-9E98-00AA00574A4F} classSearchForm 
    Caption         =   "Find The Best Classes"
    ClientHeight    =   8280.001
    ClientLeft      =   120
    ClientTop       =   0
    ClientWidth     =   6160
-   OleObjectBlob   =   "UserForm1.frx":0000
+   OleObjectBlob   =   "classSearchForm.frx":0000
    StartUpPosition =   1  'CenterOwner
 End
-Attribute VB_Name = "UserForm1"
+Attribute VB_Name = "classSearchForm"
 Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = True
@@ -20,17 +20,26 @@ Option Explicit
 'Microsoft Internet Controls
 'Microsoft VBScript Regular Expressions 1.0 & 5.5
 
-Private Sub downloadFCQData_Click()
-    Call mainGrades
-    Application.Workbooks("Project.xlsm").Worksheets("Main").Activate
+Private Sub UserForm_Initialize()
+    'check to see if requirements and data worksheets exist. If so enable userform buttons'
+    If Evaluate("ISREF('" & "Requirements" & "'!A1)") Then
+        classSearchForm.downloadFCQData.Enabled = True
+        If Evaluate("ISREF('" & "Data" & "'!A1)") Then
+            classSearchForm.findClass.Enabled = True
+            classSearchForm.oneYearButton.Enabled = True
+            classSearchForm.multiYearButton.Enabled = True
+        End If
+    End If
+    classSearchForm.oneYearButton.Caption = "Only " & (Year(Date) - 1)
+    classSearchForm.multiYearButton.Caption = (Year(Date) - 1) & " & " & (Year(Date) - 2)
 End Sub
 
 Private Sub downloadRequirements_Click()
-    Call Main
-    Application.Workbooks("Project.xlsm").Worksheets("Main").Activate
+    Call mainRequirements
+    ThisWorkbook.Worksheets("Main").Activate
 End Sub
 
-Private Sub Main()
+Private Sub mainRequirements()
     'this is the main function for downloading the requirements/core-classes
     Dim ws As Worksheet
     Call deleteSheet("Requirements")
@@ -44,20 +53,9 @@ Private Sub Main()
     downloadFCQData.Enabled = True
     If Evaluate("ISREF('" & "Data" & "'!A1)") Then
         findClass.Enabled = True
-        OptionButton1.Enabled = True
-        OptionButton2.Enabled = True
+        oneYearButton.Enabled = True
+        multiYearButton.Enabled = True
     End If
-End Sub
-
-Private Sub updateListBox()
-    'clears the listbox then updates it with all of the categories of classes found in the requirements worksheet
-    ListBox1.Clear
-    Dim rngRequirements As Range, cell As Range
-    Set rngRequirements = Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("A1:L1")
-    For Each cell In rngRequirements
-        ListBox1.AddItem (cell.Value)
-    Next cell
-    ListBox1.Selected(0) = True
 End Sub
 
 Private Sub getRequirements()
@@ -136,7 +134,7 @@ Private Sub getRequirements()
                 End If
             Next intCounter
          ElseIf isSequenced = True Then
-            'this feels really redundent. However, there's not real pattern in the LIs
+            'this feels really redundent. However, there's no real pattern in the LIs
             Set seqULLoop = objIe.document.getElementsByTagName("UL")(4).getElementsByTagName("LI")
             For Each seqLILoop In seqULLoop
                 Application.ActiveSheet.Cells(2 + activeSheetCounterSequenced, topCounter - 2).Value = seqLILoop.innerText
@@ -161,11 +159,28 @@ Private Sub getRequirements()
         objIe.Quit
         Set objIe = Nothing
     Next i
-    ActiveSheet.Range("A1:L1").Columns.AutoFit
-    ActiveSheet.Range("A1:L1").Interior.Color = RGB(207, 216, 220)
+    ActiveSheet.Range("A1:" & ActiveSheet.Cells(1, Columns.Count).End(xlToLeft).Address).Columns.AutoFit
+    ActiveSheet.Range("A1:" & ActiveSheet.Cells(1, Columns.Count).End(xlToLeft).Address).Interior.Color = RGB(207, 216, 220)
 End Sub
 
-Public Sub mainGrades()
+Private Sub updateListBox()
+    'clears the listbox then updates it with all of the categories of classes found in the requirements worksheet
+    classListBox.Clear
+    Dim rngRequirements As Range, cell As Range, wkSheet
+    Set wkSheet = ThisWorkbook.Worksheets("Requirements")
+    Set rngRequirements = wkSheet.Range("A1:" & wkSheet.Cells(1, Columns.Count).End(xlToLeft).Address)
+    For Each cell In rngRequirements
+        classListBox.AddItem (cell.Value)
+    Next cell
+    classListBox.Selected(0) = True
+End Sub
+
+Private Sub downloadFCQData_Click()
+    Call mainGrades
+    ThisWorkbook.Worksheets("Main").Activate
+End Sub
+
+Private Sub mainGrades()
     'is the main activation area for downloading the fcq grades, this calls all of the other functions
     Dim targetFile As String, ws As Worksheet
     Call deleteSheet("Data")
@@ -174,24 +189,12 @@ Public Sub mainGrades()
     Call writeData(targetFile)
     If Evaluate("ISREF('" & "Requirements" & "'!A1)") Then
         findClass.Enabled = True
-        OptionButton1.Enabled = True
-        OptionButton2.Enabled = True
+        oneYearButton.Enabled = True
+        multiYearButton.Enabled = True
     End If
 End Sub
 
-
-Public Sub writeData(Target As String)
-    'opens the FCQ data from the targetDestination and copys the entire Data worksheet the project workbook.
-    Dim gradesWkb As Workbook, destWkb As Workbook, projectSheet, wrksheet As Worksheet
-    Set gradesWkb = Workbooks.Open(Target, True, True)
-    Set wrksheet = gradesWkb.Worksheets("Data")
-    Set destWkb = Application.Workbooks("Project.xlsm")
-    wrksheet.Copy After:=destWkb.Worksheets(1)
-    gradesWkb.Close savechanges:=False
-    Set gradesWkb = Nothing
-End Sub
-
-Public Function zipTarget()
+Private Function zipTarget()
     'create a temp spot to where the download will be placed - this area will be used later to open the file
     Dim targetFolder As Variant, targetFileTXT As Variant
     targetFolder = Environ("TEMP") & "\" & RandomString(8) & "\"
@@ -199,31 +202,10 @@ Public Function zipTarget()
     zipTarget = targetFolder & "cu_grades_data.csv"
 End Function
 
-Public Sub DownloadFile(targetDest)
-    'downloads the FCQ file and places it in the targetDest created in zipTarget
-    Dim myURL As String, oStream As Object
-    myURL = "https://www.colorado.edu/fcq/content/file-grade-distribution"
-
-    Dim WinHttpReq As Object
-    Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
-    WinHttpReq.Open "GET", myURL, False, "username", "password"
-    WinHttpReq.send
-    myURL = WinHttpReq.responseBody
-    If WinHttpReq.Status = 200 Then
-        Set oStream = CreateObject("ADODB.Stream")
-        oStream.Open
-        oStream.Type = 1
-        oStream.Write WinHttpReq.responseBody
-        oStream.SaveToFile targetDest, 1 ' 1 = no overwrite, 2 = overwrite
-        oStream.Close
-    End If
-End Sub
-
-
 Private Function RandomString(cb As Integer) As String
     'create the random string used as part of the destination target -ie. /tmp/asd35a/test.zip
-    Randomize
     Dim rgch As String, i As Integer
+    Randomize
     rgch = "abcdefghijklmnopqrstuvwxyz"
     rgch = rgch & UCase(rgch) & "0123456789"
 
@@ -233,6 +215,60 @@ Private Function RandomString(cb As Integer) As String
 
 End Function
 
+Private Sub DownloadFile(targetDest)
+    'downloads the FCQ file and places it in the targetDest created in zipTarget
+    Dim myURL As String, oStream As Object, WinHttpReq
+    myURL = "https://www.colorado.edu/fcq/content/file-grade-distribution"
+
+    Set WinHttpReq = CreateObject("Microsoft.XMLHTTP")
+    WinHttpReq.Open "GET", myURL, False, "username", "password"
+    WinHttpReq.send
+    myURL = WinHttpReq.responseBody
+    If WinHttpReq.Status = 200 Then
+        Set oStream = CreateObject("ADODB.Stream")
+        oStream.Open
+        oStream.Type = 1
+        oStream.Write WinHttpReq.responseBody
+        oStream.SaveToFile targetDest, 1
+        oStream.Close
+    End If
+End Sub
+
+Private Sub writeData(Target As String)
+    'opens the FCQ data from the targetDestination and copys the entire Data worksheet the project workbook.
+    Dim gradesWkb As Workbook, projectSheet, wrksheet As Worksheet
+    Set gradesWkb = Workbooks.Open(Target, True, True)
+    Set wrksheet = gradesWkb.Worksheets("Data")
+    wrksheet.Copy After:=ThisWorkbook.Worksheets(1)
+    Call modifyData
+    gradesWkb.Close savechanges:=False
+    Set gradesWkb = Nothing
+End Sub
+
+Private Sub modifyData()
+    'Move values around, deletes dumb data, and applies styles.
+    Dim dataWks As Worksheet
+    Set dataWks = ThisWorkbook.Worksheets("data")
+    dataWks.Range("A3").Value = dataWks.Range("A2")
+    dataWks.Range("A2").Value = dataWks.Range("A1")
+    dataWks.Range("A3").Font.Color = RGB(0, 0, 0)
+    dataWks.Range("A1").Value = ""
+    dataWks.Range("A1:G1").Style = ActiveWorkbook.Styles("Heading 2")
+    dataWks.Range("A1:G1").Merge
+    dataWks.Columns("L:L").UnMerge
+    dataWks.Columns("L:L").Cut Destination:=dataWks.Columns("H:H")
+    dataWks.Range("H4").Value = "Credit Hours"
+    dataWks.Columns("N:N").UnMerge
+    dataWks.Columns("N:N").Cut Destination:=dataWks.Columns("I:I")
+    dataWks.Columns("Q:V").UnMerge
+    dataWks.Columns("Q:V").Cut Destination:=dataWks.Columns("J:O")
+    dataWks.Columns("AE:AE").UnMerge
+    dataWks.Columns("AE:AE").Cut Destination:=dataWks.Columns("P:P")
+    dataWks.Columns("AM:AM").UnMerge
+    dataWks.Columns("AM:AM").Cut Destination:=dataWks.Columns("Q:Q")
+    dataWks.Columns("R:AZ").Delete
+End Sub
+
 Private Sub findClass_Click()
     Call findClassMain
 End Sub
@@ -241,10 +277,10 @@ Private Sub findClassMain()
     'basically loop through all of the courses and add the subject and number to an array that'll be used to filter out the classes
     'all of the classes are taken from the specified column in the requirements worksheet
     Dim reqWks As Worksheet, isSequenced As Boolean, dataWks As Worksheet, years As Variant, cell As Variant, subjectParts As Variant, numbers As Variant, tmpClassInfoStr As String, classInfoStr As String, numberStr As String, numberParts As Variant, strPattern As String, regEx As New RegExp, columnNum As Integer, i As Integer, valueStr As String, valueParts As Variant, subjects As Variant, subjectStr As String, tmpNumber As String, tmpSubject As String
-    Set reqWks = Application.Workbooks("Project.xlsm").Worksheets("Requirements")
-    Set dataWks = Application.Workbooks("Project.xlsm").Worksheets("Data")
-    columnNum = Application.WorksheetFunction.Match(ListBox1.Value, reqWks.Range("A1:L1"), 0)
-    If ListBox1.Value = "Natural Science Seq." Then
+    Set reqWks = ThisWorkbook.Worksheets("Requirements")
+    Set dataWks = ThisWorkbook.Worksheets("Data")
+    columnNum = Application.WorksheetFunction.Match(classListBox.Value, reqWks.Range("A1:" & reqWks.Cells(1, Columns.Count).End(xlToLeft).Address), 0)
+    If classListBox.Value = "Natural Science Seq." Then
         isSequenced = True
     End If
     For i = 0 To (Application.WorksheetFunction.CountA(reqWks.Columns(columnNum)) - 2)
@@ -297,12 +333,8 @@ Private Sub findClassMain()
     numbers = Split(tmpNumber, "|")
     dataWks.Range("A4:F" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).AutoFilter field:=5, Criteria1:=(subjects), VisibleDropDown:=True, Operator:=xlFilterValues
     dataWks.Range("A4:F" & Application.WorksheetFunction.CountA(dataWks.Columns(6))).AutoFilter field:=6, Criteria1:=(numbers), VisibleDropDown:=True, Operator:=xlFilterValues
-    If UserForm1.OptionButton1.Value = True Then
-        dataWks.Range("A4:F" & Application.WorksheetFunction.CountA(dataWks.Columns(6))).AutoFilter field:=1, Criteria1:="2017*", VisibleDropDown:=True
-    Else
-        years = Split("20171|20161|20167|20177", "|")
-        dataWks.Range("A4:F" & Application.WorksheetFunction.CountA(dataWks.Columns(6))).AutoFilter field:=1, Criteria1:=(years), VisibleDropDown:=True, Operator:=xlFilterValues
-    End If
+    years = IIf(classSearchForm.oneYearButton.Value, Split(Year(Date) - 1 & "1" & "|" & Year(Date) - 1 & "7", "|"), Split(Year(Date) - 1 & "1" & "|" & Year(Date) - 1 & "7" & "|" & Year(Date) - 2 & "1" & "|" & Year(Date) - 2 & "7", "|"))
+    dataWks.Range("A4:F" & Application.WorksheetFunction.CountA(dataWks.Columns(6))).AutoFilter field:=1, Criteria1:=(years), VisibleDropDown:=True, Operator:=xlFilterValues
     
     'Have to loop through the cells again, as there may be some classes that were supposed to be filtered but weren't'
     For Each cell In dataWks.Range("A5:A" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible)
@@ -311,22 +343,12 @@ Private Sub findClassMain()
             cell.EntireRow.Hidden = True
         End If
     Next cell
-    dataWks.Range("Q5").Sort key1:=dataWks.Range("Q5"), Order1:=xlDescending
+    dataWks.Range("J5").Sort key1:=dataWks.Range("J5"), Order1:=xlDescending
     dataWks.Range("E5:G" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(237, 231, 246)
-    dataWks.Range("Q5:Q" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(232, 234, 246)
-    dataWks.Range("AE5:AE" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(232, 245, 233)
+    dataWks.Range("P5:P" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(232, 234, 246)
+    dataWks.Range("J5:J" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(232, 245, 233)
+    dataWks.Range("A1").Value = "Best Classes For " & classSearchForm.classListBox.Value
     dataWks.Activate
     Unload Me
 End Sub
 
-Private Sub UserForm_Initialize()
-    'check to see if requirements and data worksheets exist. If so enable userform buttons'
-    If Evaluate("ISREF('" & "Requirements" & "'!A1)") Then
-        UserForm1.downloadFCQData.Enabled = True
-        If Evaluate("ISREF('" & "Data" & "'!A1)") Then
-            UserForm1.findClass.Enabled = True
-            UserForm1.OptionButton1.Enabled = True
-            UserForm1.OptionButton2.Enabled = True
-        End If
-    End If
-End Sub

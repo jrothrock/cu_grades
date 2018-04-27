@@ -14,22 +14,21 @@ Private Sub findClass_Click()
     Dim cell As Range, reqWks As Worksheet, i As Integer
     
     'So apparently an if statement will evaluate both sides, even if the first one fails. Interesting. If has to be broken up into two
-    
     If Evaluate("ISREF('" & "Requirements" & "'!A1)") Then
-        Set reqWks = Application.Workbooks("Project.xlsm").Worksheets("Requirements")
-        If IsEmpty(Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("L1")) = False Then
-            For i = 1 To Application.Workbooks("Project.xlsm").Worksheets("Requirements").Range("A1:L1").Columns.Count
-                UserForm1.ListBox1.AddItem (Application.Workbooks("Project.xlsm").Worksheets("Requirements").Cells(1, i).Value)
+        Set reqWks = ThisWorkbook.Worksheets("Requirements")
+        If IsEmpty(ThisWorkbook.Worksheets("Requirements").Cells(1, Columns.Count).End(xlToLeft)) = False Then
+            For i = 1 To ThisWorkbook.Worksheets("Requirements").Cells(1, Columns.Count).End(xlToLeft).Column
+                classSearchForm.classListBox.AddItem (ThisWorkbook.Worksheets("Requirements").Cells(1, i).Value)
             Next i
-            UserForm1.ListBox1.Selected(0) = True
+            classSearchForm.classListBox.Selected(0) = True
         End If
     End If
     
     If Evaluate("ISREF('" & "Data" & "'!A1)") Then
-        Application.Workbooks("Project.xlsm").Worksheets("Data").AutoFilter.ShowAllData
+        ThisWorkbook.Worksheets("Data").AutoFilter.ShowAllData
     End If
     
-    UserForm1.Show
+    classSearchForm.Show
 End Sub
 
 Private Sub Worksheet_Activate()
