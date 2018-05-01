@@ -260,8 +260,9 @@ Private Sub modifyData()
     dataWks.Columns("L:L").UnMerge
     dataWks.Columns("L:L").Cut Destination:=dataWks.Columns("H:H")
     dataWks.Range("H14").Value = "Credit Hours"
-    dataWks.Columns("N:N").UnMerge
-    dataWks.Columns("N:N").Cut Destination:=dataWks.Columns("I:I")
+    dataWks.Columns("M:M").UnMerge
+    dataWks.Columns("M:M").Cut Destination:=dataWks.Columns("I:I")
+    dataWks.Range("M14").Value = "N_ENROLL"
     dataWks.Columns("Q:V").UnMerge
     dataWks.Columns("Q:V").Cut Destination:=dataWks.Columns("J:O")
     dataWks.Columns("AE:AE").UnMerge
@@ -294,7 +295,7 @@ End Sub
 Private Sub findClassMain()
     'basically loop through all of the courses and add the subject and number to an array that'll be used to filter out the classes
     'all of the classes are taken from the specified column in the requirements worksheet
-    Dim reqWks As Worksheet, classWks As Worksheet, personCount As Integer, totalGPA As Double, lowestClass As String, highestClass As String, lowestClassGPA As Double, highestClassGPA As Double, tmpTotalGPA As Double, tmpTotalClasses As Integer, tmpTotalWorkLoad As Double, tmpCount As Integer, classGPA As Collection, classGPAKeys() As String, tempClassGPAKeys As String, isSequenced As Boolean, dataWks As Worksheet, years As Variant, cell As Variant, subjectParts As Variant, numbers As Variant, tmpClassInfoStr As String, classInfoStr As String, numberStr As String, numberParts As Variant, strPattern As String, regEx As New RegExp, columnNum As Integer, i As Integer, valueStr As String, valueParts As Variant, subjects As Variant, subjectStr As String, tmpNumber As String, tmpSubject As String
+    Dim reqWks As Worksheet, classWks As Worksheet, personCount As Integer, tmpATotal As Double, tmpBTotal As Double, tmpCTotal As Double, tmpDTotal As Double, tmpFTotal As Double, totalGPA As Double, lowestClass As String, highestClass As String, lowestClassGPA As Double, highestClassGPA As Double, tmpTotalGPA As Double, tmpTotalClasses As Integer, tmpTotalWorkLoad As Double, tmpCount As Integer, classGPA As Collection, classGPAKeys() As String, tempClassGPAKeys As String, isSequenced As Boolean, dataWks As Worksheet, years As Variant, cell As Variant, subjectParts As Variant, numbers As Variant, tmpClassInfoStr As String, classInfoStr As String, numberStr As String, numberParts As Variant, strPattern As String, regEx As New RegExp, columnNum As Integer, i As Integer, valueStr As String, valueParts As Variant, subjects As Variant, subjectStr As String, tmpNumber As String, tmpSubject As String
     Set reqWks = ThisWorkbook.Worksheets("Requirements")
     Set dataWks = ThisWorkbook.Worksheets("Data")
     Set classGPA = New Collection
@@ -369,18 +370,43 @@ Private Sub findClassMain()
                     tmpTotalGPA = classGPA.Item(cell.Offset(0, 6).Value + "_total")
                     tmpTotalClasses = classGPA.Item(cell.Offset(0, 6).Value + "_classCount")
                     tmpTotalWorkLoad = classGPA.Item(cell.Offset(0, 6).Value + "_workloadTotal")
+                    tmpATotal = classGPA.Item(cell.Offset(0, 6).Value + "_aTotal")
+                    tmpBTotal = classGPA.Item(cell.Offset(0, 6).Value + "_bTotal")
+                    tmpCTotal = classGPA.Item(cell.Offset(0, 6).Value + "_cTotal")
+                    tmpDTotal = classGPA.Item(cell.Offset(0, 6).Value + "_dTotal")
+                    tmpFTotal = classGPA.Item(cell.Offset(0, 6).Value + "_fTotal")
                     classGPA.Remove (cell.Offset(0, 6).Value + "_count")
                     classGPA.Remove (cell.Offset(0, 6).Value + "_total")
                     classGPA.Remove (cell.Offset(0, 6).Value)
                     classGPA.Remove (cell.Offset(0, 6).Value + "_classCount")
                     classGPA.Remove (cell.Offset(0, 6).Value + "_workloadTotal")
                     classGPA.Remove (cell.Offset(0, 6).Value + "_workload")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_aTotal")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_a")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_bTotal")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_b")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_cTotal")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_c")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_dTotal")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_d")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_fTotal")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_f")
                     classGPA.Add Key:=(cell.Offset(0, 6).Value + "_count"), Item:=tmpCount + cell.Offset(0, 8).Value
                     classGPA.Add Key:=(cell.Offset(0, 6).Value + "_total"), Item:=tmpTotalGPA + CDbl(cell.Offset(0, 8).Value) * CDbl(cell.Offset(0, 9).Value)
                     classGPA.Add Key:=(cell.Offset(0, 6).Value), Item:=((tmpTotalGPA + (CDbl(cell.Offset(0, 8).Value) * CDbl(cell.Offset(0, 9).Value))) / (tmpCount + cell.Offset(0, 8).Value))
                     classGPA.Add Key:=(cell.Offset(0, 6).Value + "_classCount"), Item:=(tmpTotalClasses + 1)
                     classGPA.Add Key:=(cell.Offset(0, 6).Value + "_workloadTotal"), Item:=tmpTotalWorkLoad + cell.Offset(0, 15).Value
                     classGPA.Add Key:=(cell.Offset(0, 6).Value + "_workload"), Item:=((tmpTotalWorkLoad + cell.Offset(0, 15).Value) / (tmpTotalClasses + 1))
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_aTotal"), Item:=tmpATotal + cell.Offset(0, 10).Value
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_a"), Item:=((tmpATotal + cell.Offset(0, 10).Value) / (tmpTotalClasses + 1))
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_bTotal"), Item:=tmpBTotal + cell.Offset(0, 11).Value
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_b"), Item:=((tmpBTotal + cell.Offset(0, 11).Value) / (tmpTotalClasses + 1))
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_cTotal"), Item:=tmpCTotal + cell.Offset(0, 12).Value
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_c"), Item:=((tmpCTotal + cell.Offset(0, 12).Value) / (tmpTotalClasses + 1))
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_dTotal"), Item:=tmpDTotal + cell.Offset(0, 13).Value
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_d"), Item:=((tmpDTotal + cell.Offset(0, 13).Value) / (tmpTotalClasses + 1))
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_fTotal"), Item:=tmpFTotal + cell.Offset(0, 14).Value
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_f"), Item:=((tmpFTotal + cell.Offset(0, 14).Value) / (tmpTotalClasses + 1))
                 Else
                     tempClassGPAKeys = tempClassGPAKeys + cell.Offset(0, 6).Value + "|"
                     classGPA.Add Item:=CDbl(cell.Offset(0, 8).Value), Key:=cell.Offset(0, 6).Value & "_count"
@@ -389,6 +415,16 @@ Private Sub findClassMain()
                     classGPA.Add Item:=1, Key:=cell.Offset(0, 6).Value + "_classCount"
                     classGPA.Add Item:=cell.Offset(0, 15).Value, Key:=cell.Offset(0, 6).Value + "_workloadTotal"
                     classGPA.Add Item:=cell.Offset(0, 15).Value, Key:=cell.Offset(0, 6).Value + "_workload"
+                    classGPA.Add Item:=cell.Offset(0, 10).Value, Key:=cell.Offset(0, 6).Value + "_aTotal"
+                    classGPA.Add Item:=cell.Offset(0, 10).Value, Key:=cell.Offset(0, 6).Value + "_a"
+                    classGPA.Add Item:=cell.Offset(0, 11).Value, Key:=cell.Offset(0, 6).Value + "_bTotal"
+                    classGPA.Add Item:=cell.Offset(0, 11).Value, Key:=cell.Offset(0, 6).Value + "_b"
+                    classGPA.Add Item:=cell.Offset(0, 12).Value, Key:=cell.Offset(0, 6).Value + "_cTotal"
+                    classGPA.Add Item:=cell.Offset(0, 12).Value, Key:=cell.Offset(0, 6).Value + "_c"
+                    classGPA.Add Item:=cell.Offset(0, 13).Value, Key:=cell.Offset(0, 6).Value + "_dTotal"
+                    classGPA.Add Item:=cell.Offset(0, 13).Value, Key:=cell.Offset(0, 6).Value + "_d"
+                    classGPA.Add Item:=cell.Offset(0, 14).Value, Key:=cell.Offset(0, 6).Value + "_fTotal"
+                    classGPA.Add Item:=cell.Offset(0, 14).Value, Key:=cell.Offset(0, 6).Value + "_f"
                 End If
             End If
         End If
@@ -410,7 +446,12 @@ Private Sub findClassMain()
     classWks.Range("C6").Value = "N_Enroll:"
     classWks.Range("D6").Value = "N_Classes:"
     classWks.Range("E6").Value = "Workload avg:"
-    classWks.Range("A6,B6,C6,D6,E6").Font.Bold = True
+    classWks.Range("F6").Value = "PCT_A:"
+    classWks.Range("G6").Value = "PCT_B:"
+    classWks.Range("H6").Value = "PCT_C:"
+    classWks.Range("I6").Value = "PCT_D:"
+    classWks.Range("J6").Value = "PCT_D:"
+    classWks.Range("A6:J6").Font.Bold = True
     For i = 0 To (UBound(classGPAKeys) - 1)
         If classGPA.Item(classGPAKeys(i)) > highestClassGPA Then
             highestClass = classGPAKeys(i)
@@ -423,20 +464,26 @@ Private Sub findClassMain()
         classWks.Cells(i + 7, 2).Value = Round(classGPA.Item(classGPAKeys(i)), 2)
         classWks.Cells(i + 7, 3).Value = classGPA.Item(classGPAKeys(i) & "_count")
         classWks.Cells(i + 7, 4).Value = classGPA.Item(classGPAKeys(i) & "_classCount")
-        classWks.Cells(i + 7, 5).Value = Round(classGPA.Item(classGPAKeys(i) & "_workload"), 2)
+        classWks.Cells(i + 7, 5).Value = Round(classGPA.Item(classGPAKeys(i) & "_workload"), 3)
+        classWks.Cells(i + 7, 6).Value = Round(classGPA.Item(classGPAKeys(i) & "_a"), 3)
+        classWks.Cells(i + 7, 7).Value = Round(classGPA.Item(classGPAKeys(i) & "_b"), 3)
+        classWks.Cells(i + 7, 8).Value = Round(classGPA.Item(classGPAKeys(i) & "_c"), 3)
+        classWks.Cells(i + 7, 9).Value = Round(classGPA.Item(classGPAKeys(i) & "_d"), 3)
+        classWks.Cells(i + 7, 10).Value = Round(classGPA.Item(classGPAKeys(i) & "_f"), 3)
     Next i
     dataWks.Range("A4").Value = "Best Class: " & highestClass & " (avg. GPA: " & Round(highestClassGPA, 2) & ")"
     dataWks.Range("A5").Value = "Worst Class: " & lowestClass & " (avg. GPA: " & Round(lowestClassGPA, 2) & ")"
     dataWks.Range("A3").Interior.Color = RGB(255, 248, 225)
     dataWks.Range("A4").Interior.Color = RGB(232, 245, 233)
     dataWks.Range("A5").Interior.Color = RGB(251, 233, 231)
+    classWks.Range("F7:J" & Application.WorksheetFunction.CountA(dataWks.Columns(5)) + 5).NumberFormat = "0.00%"
     classWks.Columns("A").AutoFit
     classWks.Columns("C:E").AutoFit
     classWks.Range("B7").Sort key1:=classWks.Range("B7"), Order1:=xlDescending
     classWks.Range("A7:A" & Application.WorksheetFunction.CountA(classWks.Columns(1)) + 4).Interior.Color = RGB(237, 231, 246)
     classWks.Range("E7:E" & Application.WorksheetFunction.CountA(classWks.Columns(1)) + 4).Interior.Color = RGB(232, 234, 246)
     classWks.Range("B7:B" & Application.WorksheetFunction.CountA(classWks.Columns(1)) + 4).Interior.Color = RGB(232, 245, 233)
-    classWks.Range("A6:E6").Interior.Color = RGB(255, 255, 102)
+    classWks.Range("A6:J6").Interior.Color = RGB(255, 255, 102)
     classWks.Range("A3:A4").Merge
     classWks.Range("A3").Value = "SEE ""DATA"" FOR INDIVIDUAL CLASSES, TEACHERS, AND PERCETANGE OF As, Bs, and Cs."
     classWks.Range("A3").VerticalAlignment = xlTop
