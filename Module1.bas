@@ -4,7 +4,7 @@ Option Explicit
 Public Sub deleteSheet(shtName As String)
     Dim xWs As Worksheet
     For Each xWs In Application.ActiveWorkbook.Worksheets
-        If xWs.Name = shtName Then
+        If xWs.name = shtName Then
             xWs.Delete
         End If
     Next

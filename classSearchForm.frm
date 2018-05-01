@@ -46,7 +46,7 @@ Private Sub mainRequirements()
     With ThisWorkbook
         Set ws = .Worksheets.Add(After:=.Sheets(.Sheets.Count))
     End With
-    ws.Name = "Requirements"
+    ws.name = "Requirements"
     ws.Activate
     Call getRequirements
     Call updateListBox
@@ -97,7 +97,7 @@ Private Sub getRequirements()
             topCounter = topCounter + 2
         ElseIf isSequenced Then
             Application.ActiveSheet.Cells(1, 1 + topCounter).Value = objIe.document.getElementById("page-title").innerText & " Seq."
-            Application.ActiveSheet.Cells(1, 2 + topCounter).Value = objIe.document.getElementById("page-title").innerText & " Non-Seq."
+            Application.ActiveSheet.Cells(1, 2 + topCounter).Value = objIe.document.getElementById("page-title").innerText & " Non Seq."
             Application.ActiveSheet.Cells(1, 3 + topCounter).Value = objIe.document.getElementById("page-title").innerText & " Labs"
             topCounter = topCounter + 3
         Else
@@ -249,15 +249,17 @@ Private Sub modifyData()
     'Move values around, deletes dumb data, and applies styles.
     Dim dataWks As Worksheet
     Set dataWks = ThisWorkbook.Worksheets("data")
-    dataWks.Range("A3").Value = dataWks.Range("A2")
-    dataWks.Range("A2").Value = dataWks.Range("A1")
     dataWks.Range("A3").Font.Color = RGB(0, 0, 0)
-    dataWks.Range("A1").Value = ""
+    dataWks.Range("A1, A2, A3").Value = ""
+    dataWks.Range("A2, A3, A4").EntireRow.Insert
+    dataWks.Range("A2, A3, A4, A5, A6").EntireRow.Insert
+    dataWks.Range("A2, A3").EntireRow.Insert
+    dataWks.Range("A2").UnMerge
     dataWks.Range("A1:G1").Style = ActiveWorkbook.Styles("Heading 2")
     dataWks.Range("A1:G1").Merge
     dataWks.Columns("L:L").UnMerge
     dataWks.Columns("L:L").Cut Destination:=dataWks.Columns("H:H")
-    dataWks.Range("H4").Value = "Credit Hours"
+    dataWks.Range("H14").Value = "Credit Hours"
     dataWks.Columns("N:N").UnMerge
     dataWks.Columns("N:N").Cut Destination:=dataWks.Columns("I:I")
     dataWks.Columns("Q:V").UnMerge
@@ -267,6 +269,22 @@ Private Sub modifyData()
     dataWks.Columns("AM:AM").UnMerge
     dataWks.Columns("AM:AM").Cut Destination:=dataWks.Columns("Q:Q")
     dataWks.Columns("R:AZ").Delete
+    dataWks.Range("A2:G2").Merge
+    dataWks.Range("A3:G3").Merge
+    dataWks.Range("A4:G4").Merge
+    dataWks.Range("A5:G5").Merge
+    dataWks.Range("A6:G6").Merge
+    dataWks.Range("A7:G7").Merge
+    dataWks.Range("A8:G8").Merge
+    dataWks.Range("A9:G9").Merge
+    dataWks.Range("A10:G10").Merge
+    dataWks.Range("A11:G11").Merge
+    dataWks.Range("A12:G12").Merge
+    dataWks.Range("A13:G13").Merge
+    dataWks.Range("A7:A10").Merge
+    dataWks.Range("A7").Value = "While the above best class is a weighted average, it may not actually be the best. When looking at the data, classes that have very few enrollments (with super high GPAs) maybe meant for student TAs. A good example of this is the Health and Nutrition Class. Always check the number of enrolled."
+    dataWks.Range("A7, A9").VerticalAlignment = xlTop
+    dataWks.Range("A7, A9").WrapText = True
 End Sub
 
 Private Sub findClass_Click()
@@ -276,9 +294,11 @@ End Sub
 Private Sub findClassMain()
     'basically loop through all of the courses and add the subject and number to an array that'll be used to filter out the classes
     'all of the classes are taken from the specified column in the requirements worksheet
-    Dim reqWks As Worksheet, isSequenced As Boolean, dataWks As Worksheet, years As Variant, cell As Variant, subjectParts As Variant, numbers As Variant, tmpClassInfoStr As String, classInfoStr As String, numberStr As String, numberParts As Variant, strPattern As String, regEx As New RegExp, columnNum As Integer, i As Integer, valueStr As String, valueParts As Variant, subjects As Variant, subjectStr As String, tmpNumber As String, tmpSubject As String
+    Dim reqWks As Worksheet, classWks As Worksheet, personCount As Integer, totalGPA As Double, lowestClass As String, highestClass As String, lowestClassGPA As Double, highestClassGPA As Double, tmpTotalGPA As Double, tmpTotalClasses As Integer, tmpTotalWorkLoad As Double, tmpCount As Integer, classGPA As Collection, classGPAKeys() As String, tempClassGPAKeys As String, isSequenced As Boolean, dataWks As Worksheet, years As Variant, cell As Variant, subjectParts As Variant, numbers As Variant, tmpClassInfoStr As String, classInfoStr As String, numberStr As String, numberParts As Variant, strPattern As String, regEx As New RegExp, columnNum As Integer, i As Integer, valueStr As String, valueParts As Variant, subjects As Variant, subjectStr As String, tmpNumber As String, tmpSubject As String
     Set reqWks = ThisWorkbook.Worksheets("Requirements")
     Set dataWks = ThisWorkbook.Worksheets("Data")
+    Set classGPA = New Collection
+    lowestClassGPA = 4
     columnNum = Application.WorksheetFunction.Match(classListBox.Value, reqWks.Range("A1:" & reqWks.Cells(1, Columns.Count).End(xlToLeft).Address), 0)
     If classListBox.Value = "Natural Science Seq." Then
         isSequenced = True
@@ -331,24 +351,121 @@ Private Sub findClassMain()
     classInfoStr = Left(classInfoStr, Len(classInfoStr) - 1)
     subjects = Split(tmpSubject, "|")
     numbers = Split(tmpNumber, "|")
-    dataWks.Range("A4:F" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).AutoFilter field:=5, Criteria1:=(subjects), VisibleDropDown:=True, Operator:=xlFilterValues
-    dataWks.Range("A4:F" & Application.WorksheetFunction.CountA(dataWks.Columns(6))).AutoFilter field:=6, Criteria1:=(numbers), VisibleDropDown:=True, Operator:=xlFilterValues
+    dataWks.Range("A12:F" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).AutoFilter field:=5, Criteria1:=(subjects), VisibleDropDown:=True, Operator:=xlFilterValues
+    dataWks.Range("A12:F" & Application.WorksheetFunction.CountA(dataWks.Columns(6))).AutoFilter field:=6, Criteria1:=(numbers), VisibleDropDown:=True, Operator:=xlFilterValues
     years = IIf(classSearchForm.oneYearButton.Value, Split(Year(Date) - 1 & "1" & "|" & Year(Date) - 1 & "7", "|"), Split(Year(Date) - 1 & "1" & "|" & Year(Date) - 1 & "7" & "|" & Year(Date) - 2 & "1" & "|" & Year(Date) - 2 & "7", "|"))
-    dataWks.Range("A4:F" & Application.WorksheetFunction.CountA(dataWks.Columns(6))).AutoFilter field:=1, Criteria1:=(years), VisibleDropDown:=True, Operator:=xlFilterValues
-    
+    dataWks.Range("A12:F" & Application.WorksheetFunction.CountA(dataWks.Columns(6))).AutoFilter field:=1, Criteria1:=(years), VisibleDropDown:=True, Operator:=xlFilterValues
     'Have to loop through the cells again, as there may be some classes that were supposed to be filtered but weren't'
-    For Each cell In dataWks.Range("A5:A" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible)
+    For Each cell In dataWks.Range("A15:A" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible)
         tmpClassInfoStr = cell.Offset(0, 4).Value & cell.Offset(0, 5).Value
         If Not classInfoStr Like ("*" & tmpClassInfoStr & "*") Then
             cell.EntireRow.Hidden = True
+        Else
+            personCount = personCount + CInt(cell.Offset(0, 8).Value)
+            totalGPA = totalGPA + CDbl(cell.Offset(0, 8).Value) * CDbl(cell.Offset(0, 9).Value)
+            If cell.Offset(0, 4).Value <> "HONR" Then
+                If HasKey(classGPA, cell.Offset(0, 6).Value) Then
+                    tmpCount = classGPA.Item(cell.Offset(0, 6).Value + "_count")
+                    tmpTotalGPA = classGPA.Item(cell.Offset(0, 6).Value + "_total")
+                    tmpTotalClasses = classGPA.Item(cell.Offset(0, 6).Value + "_classCount")
+                    tmpTotalWorkLoad = classGPA.Item(cell.Offset(0, 6).Value + "_workloadTotal")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_count")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_total")
+                    classGPA.Remove (cell.Offset(0, 6).Value)
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_classCount")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_workloadTotal")
+                    classGPA.Remove (cell.Offset(0, 6).Value + "_workload")
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_count"), Item:=tmpCount + cell.Offset(0, 8).Value
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_total"), Item:=tmpTotalGPA + CDbl(cell.Offset(0, 8).Value) * CDbl(cell.Offset(0, 9).Value)
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value), Item:=((tmpTotalGPA + (CDbl(cell.Offset(0, 8).Value) * CDbl(cell.Offset(0, 9).Value))) / (tmpCount + cell.Offset(0, 8).Value))
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_classCount"), Item:=(tmpTotalClasses + 1)
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_workloadTotal"), Item:=tmpTotalWorkLoad + cell.Offset(0, 15).Value
+                    classGPA.Add Key:=(cell.Offset(0, 6).Value + "_workload"), Item:=((tmpTotalWorkLoad + cell.Offset(0, 15).Value) / (tmpTotalClasses + 1))
+                Else
+                    tempClassGPAKeys = tempClassGPAKeys + cell.Offset(0, 6).Value + "|"
+                    classGPA.Add Item:=CDbl(cell.Offset(0, 8).Value), Key:=cell.Offset(0, 6).Value & "_count"
+                    classGPA.Add Item:=(CDbl(cell.Offset(0, 8).Value) * CDbl(cell.Offset(0, 9).Value)), Key:=cell.Offset(0, 6).Value & "_total"
+                    classGPA.Add Item:=((CDbl(cell.Offset(0, 8).Value) * CDbl(cell.Offset(0, 9).Value)) / CDbl(cell.Offset(0, 8).Value)), Key:=cell.Offset(0, 6).Value
+                    classGPA.Add Item:=1, Key:=cell.Offset(0, 6).Value + "_classCount"
+                    classGPA.Add Item:=cell.Offset(0, 15).Value, Key:=cell.Offset(0, 6).Value + "_workloadTotal"
+                    classGPA.Add Item:=cell.Offset(0, 15).Value, Key:=cell.Offset(0, 6).Value + "_workload"
+                End If
+            End If
         End If
     Next cell
-    dataWks.Range("J5").Sort key1:=dataWks.Range("J5"), Order1:=xlDescending
-    dataWks.Range("E5:G" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(237, 231, 246)
-    dataWks.Range("P5:P" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(232, 234, 246)
-    dataWks.Range("J5:J" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(232, 245, 233)
+    dataWks.Range("J15").Sort key1:=dataWks.Range("J15"), Order1:=xlDescending
+    dataWks.Range("E15:G" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(237, 231, 246)
+    dataWks.Range("P15:P" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(232, 234, 246)
+    dataWks.Range("J15:J" & Application.WorksheetFunction.CountA(dataWks.Columns(5))).SpecialCells(xlCellTypeVisible).Interior.Color = RGB(232, 245, 233)
     dataWks.Range("A1").Value = "Best Classes For " & classSearchForm.classListBox.Value
-    dataWks.Activate
+    dataWks.Range("A3").Value = "Average " & classSearchForm.classListBox.Value & " GPA: " & Round(CDbl(totalGPA / personCount), 2)
+    tempClassGPAKeys = Left(tempClassGPAKeys, Len(tempClassGPAKeys) - 1)
+    classGPAKeys = Split(tempClassGPAKeys, "|")
+    Set classWks = createClassSheet()
+    classWks.Range("A1:G1").Merge
+    classWks.Range("A1").Value = "Class Averages For " & classListBox.Value & " (Avg. Total GPA: " & Round(CDbl(totalGPA / personCount), 2) & ")"
+    classWks.Range("A1").Font.Bold = True
+    classWks.Range("A6").Value = "Class:"
+    classWks.Range("B6").Value = "GPA:"
+    classWks.Range("C6").Value = "N_Enroll:"
+    classWks.Range("D6").Value = "N_Classes:"
+    classWks.Range("E6").Value = "Workload avg:"
+    classWks.Range("A6,B6,C6,D6,E6").Font.Bold = True
+    For i = 0 To (UBound(classGPAKeys) - 1)
+        If classGPA.Item(classGPAKeys(i)) > highestClassGPA Then
+            highestClass = classGPAKeys(i)
+            highestClassGPA = classGPA.Item(classGPAKeys(i))
+        ElseIf classGPA.Item(classGPAKeys(i)) < lowestClassGPA And classGPA.Item(classGPAKeys(i)) > 0 Then
+            lowestClass = classGPAKeys(i)
+            lowestClassGPA = classGPA.Item(classGPAKeys(i))
+        End If
+        classWks.Cells(i + 7, 1).Value = classGPAKeys(i)
+        classWks.Cells(i + 7, 2).Value = Round(classGPA.Item(classGPAKeys(i)), 2)
+        classWks.Cells(i + 7, 3).Value = classGPA.Item(classGPAKeys(i) & "_count")
+        classWks.Cells(i + 7, 4).Value = classGPA.Item(classGPAKeys(i) & "_classCount")
+        classWks.Cells(i + 7, 5).Value = Round(classGPA.Item(classGPAKeys(i) & "_workload"), 2)
+    Next i
+    dataWks.Range("A4").Value = "Best Class: " & highestClass & " (avg. GPA: " & Round(highestClassGPA, 2) & ")"
+    dataWks.Range("A5").Value = "Worst Class: " & lowestClass & " (avg. GPA: " & Round(lowestClassGPA, 2) & ")"
+    dataWks.Range("A3").Interior.Color = RGB(255, 248, 225)
+    dataWks.Range("A4").Interior.Color = RGB(232, 245, 233)
+    dataWks.Range("A5").Interior.Color = RGB(251, 233, 231)
+    classWks.Columns("A").AutoFit
+    classWks.Columns("C:E").AutoFit
+    classWks.Range("B7").Sort key1:=classWks.Range("B7"), Order1:=xlDescending
+    classWks.Range("A7:A" & Application.WorksheetFunction.CountA(classWks.Columns(1)) + 4).Interior.Color = RGB(237, 231, 246)
+    classWks.Range("E7:E" & Application.WorksheetFunction.CountA(classWks.Columns(1)) + 4).Interior.Color = RGB(232, 234, 246)
+    classWks.Range("B7:B" & Application.WorksheetFunction.CountA(classWks.Columns(1)) + 4).Interior.Color = RGB(232, 245, 233)
+    classWks.Range("A6:E6").Interior.Color = RGB(255, 255, 102)
+    classWks.Range("A3:A4").Merge
+    classWks.Range("A3").Value = "SEE ""DATA"" FOR INDIVIDUAL CLASSES, TEACHERS, AND PERCETANGE OF As, Bs, and Cs."
+    classWks.Range("A3").VerticalAlignment = xlTop
+    classWks.Range("A3").WrapText = True
+    classWks.Range("A3").Font.Size = 10
+    classWks.Range("A3").Font.Bold = True
+    classWks.Range("A1").Style = ActiveWorkbook.Styles("Heading 2")
+    classWks.Activate
     Unload Me
 End Sub
 
+Private Function HasKey(coll As Collection, strKey As String) As Boolean
+    Dim var As Variant
+    On Error Resume Next
+    var = coll(strKey)
+    HasKey = (Err.Number = 0)
+    Err.Clear
+End Function
+
+Private Function createClassSheet()
+    Dim i As Integer, ws As Worksheet
+    For i = 0 To classListBox.ListCount - 1
+        If Evaluate("ISREF('" & Left("Class Avg. " & classListBox.List(i), 31) & "'!A1)") = True Then
+            Call deleteSheet(Left("Class Avg. " & classListBox.List(i), 31))
+        End If
+    Next i
+    With ThisWorkbook
+        Set ws = .Worksheets.Add(After:=.Sheets(.Sheets.Count - 2))
+    End With
+    ws.name = Left("Class Avg. " & classListBox.Value, 31)
+    Set createClassSheet = ws
+End Function
